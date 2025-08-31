@@ -1,0 +1,21 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Encrypted data vault (for security!)
+data/vault.env
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Package management
+*.egg-info/
+dist/
+build/
+
+# OS specific files
+.DS_Store
+Thumbs.db
