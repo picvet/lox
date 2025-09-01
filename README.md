@@ -25,5 +25,19 @@ A secure and simple command-line password manager built with Python.
     ```
 
 ## Usage
+# Example usage
+master_password = "my_secure_password_123"
+data_to_encrypt = '{"github": {"username": "user", "password": "secret123"}}'
 
-*Coming soon!*
+# Derive key and encrypt
+key, salt = derive_key(master_password)
+encrypted = encrypt_data(data_to_encrypt, key)
+
+# Decrypt (using same salt)
+key2, _ = derive_key(master_password, salt)
+decrypted = decrypt_data(encrypted, key2)
+
+print(f"Original: {data_to_encrypt}")
+print(f"Decrypted: {decrypted}")
+print(f"Match: {data_to_encrypt == decrypted}")
+
