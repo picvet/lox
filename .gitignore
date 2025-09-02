@@ -4,7 +4,7 @@ venv/
 env/
 
 # Encrypted data vault (for security!)
-data/vault.env
+data/
 
 # Python bytecode and cache
 __pycache__/

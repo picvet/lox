@@ -19,7 +19,13 @@ def run_tests():
     print("=" * 50)
 
     # Run tests and exit with appropriate code
-    exit_code = pytest.main(["-v", "--tb=short"])
+    exit_code = pytest.main(
+        [
+            "-v",
+            "--tb=short",
+            "tests/",
+        ]
+    )
 
     print("=" * 50)
     if exit_code == 0:

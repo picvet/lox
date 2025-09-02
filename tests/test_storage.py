@@ -1,76 +1,71 @@
-import json
-
 import pytest
 
 from core.storage import Vault
 
 
-def test_storage():
-    print("Testing the final storage implementation...")
+class TestStorageIntegration:
+    """Integration tests for storage functionality."""
 
-    # Use a test vault path
-    test_vault = Vault("test_final_vault.enc")
+    @pytest.fixture
+    def test_vault(self, tmp_path):
+        """Create a test vault in temporary directory."""
+        vault_path = tmp_path / "test_vault.enc"
+        return Vault(str(vault_path))
 
-    # Clean up any previous test file
-    import os
+    def test_vault_initialization(self, test_vault):
+        """Test vault initialization."""
+        assert not test_vault.vault_exists()
 
-    if os.path.exists("test_final_vault.enc"):
-        os.remove("test_final_vault.enc")
+        success = test_vault.initialize_vault("master_password_123")
+        assert success == True
+        assert test_vault.vault_exists()
 
-    # Test 1: Initialize vault
-    print("1. Initializing vault...")
-    success = test_vault.initialize_vault("master_password_123")
-    assert success == True
-    print("   ✓ Vault initialized")
+    def test_vault_save_and_load(self, test_vault):
+        """Test saving and loading vault data."""
+        # Initialize first
+        test_vault.initialize_vault("master_password_123")
 
-    # Test 2: Save data
-    print("2. Saving test data...")
-    test_data = {
-        "services": {
-            "github": {"username": "user1", "password": "gh_secret_123"},
-            "email": {"username": "user@example.com", "password": "email_secret_456"},
-        },
-        "metadata": {"version": "1.0", "created": "2024-01-01"},
-    }
+        test_data = {
+            "services": {
+                "github": {"username": "user1", "password": "gh_secret_123"},
+                "email": {
+                    "username": "user@example.com",
+                    "password": "email_secret_456",
+                },
+            },
+            "metadata": {"version": "1.0", "created": "2024-01-01"},
+        }
 
-    success = test_vault.save_vault(test_data, "master_password_123")
-    assert success == True
-    print("   ✓ Data saved")
+        # Save data
+        success = test_vault.save_vault(test_data, "master_password_123")
+        assert success == True
 
-    # Test 3: Load data
-    print("3. Loading data...")
-    loaded_data = test_vault.load_vault("master_password_123")
-    assert loaded_data == test_data
-    print("   ✓ Data loaded correctly")
-    print("   Loaded data:", json.dumps(loaded_data, indent=2))
+        # Load data
+        loaded_data = test_vault.load_vault("master_password_123")
+        assert loaded_data == test_data
 
-    # Test 4: Test wrong password
-    print("4. Testing wrong password...")
-    try:
-        test_vault.load_vault("wrong_password")
-        print("   ✗ Should have failed!")
-    except Exception as e:
-        print("   ✓ Correctly rejected wrong password:", str(e)[:50] + "...")
+    def test_vault_wrong_password(self, test_vault):
+        """Test vault rejection of wrong password."""
+        test_vault.initialize_vault("master_password_123")
 
-    # Test 5: Test file corruption detection
-    print("5. Testing corruption detection...")
-    # Corrupt the file by appending garbage
-    with open("test_final_vault.enc", "ab") as f:
-        f.write(b"garbage_data")
+        test_data = {"services": {"test": {"password": "secret"}}}
+        test_vault.save_vault(test_data, "master_password_123")
 
-    try:
-        test_vault.load_vault("master_password_123")
-        print("   ✗ Should have detected corruption!")
-    except Exception as e:
-        print("   ✓ Correctly detected corruption:", str(e)[:50] + "...")
+        # Try wrong password
+        with pytest.raises(Exception, match="master password may be incorrect"):
+            test_vault.load_vault("wrong_password")
 
-    # Clean up
-    if os.path.exists("test_final_vault.enc"):
-        os.remove("test_final_vault.enc")
+    def test_vault_corruption_detection(self, test_vault):
+        """Test vault detection of corrupted files."""
+        test_vault.initialize_vault("master_password_123")
 
-    print("\n🎉 All tests passed! Storage implementation is working correctly.")
+        test_data = {"services": {"test": {"password": "secret"}}}
+        test_vault.save_vault(test_data, "master_password_123")
 
+        # Corrupt the file
+        with open(test_vault.vault_path, "ab") as f:
+            f.write(b"garbage_data")
 
-if __name__ == "__main__":
-    # Run tests if executed directly
-    pytest.main([__file__, "-v"])
+        # Should detect corruption
+        with pytest.raises(Exception, match="Failed to decrypt"):
+            test_vault.load_vault("master_password_123")
