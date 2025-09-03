@@ -2,42 +2,76 @@
 
 A secure and simple command-line password manager built with Python.
 
-## Features (Planned)
+## Features
 
-*   Secure AES-256 encryption for your password vault.
-*   Generate strong, random passwords.
-*   Copy passwords directly to your clipboard.
-*   Simple CLI interface.
+* Secure AES-256 encryption for your password vault.
+
+* Generate strong, random passwords.
+
+* **Retrieve and copy passwords** to your clipboard.
+
+* Simple CLI interface.
 
 ## Installation
 
-1.  Clone the repository:
-    ```bash
-    git clone <your-github-repo-url>
-    cd lox
-    ```
+1. Clone the repository:
 
-2.  Set up a virtual environment and install dependencies:
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-    pip install -r requirements.txt
-    ```
+git clone <your-github-repo-url>
+cd lox
 
-## Usage
-# Example usage
-master_password = "my_secure_password_123"
-data_to_encrypt = '{"github": {"username": "user", "password": "secret123"}}'
 
-# Derive key and encrypt
-key, salt = derive_key(master_password)
-encrypted = encrypt_data(data_to_encrypt, key)
+Set up a virtual environment and install dependencies:
 
-# Decrypt (using same salt)
-key2, _ = derive_key(master_password, salt)
-decrypted = decrypt_data(encrypted, key2)
+Lox
+A secure and simple command-line password manager built with Python.
 
-print(f"Original: {data_to_encrypt}")
-print(f"Decrypted: {decrypted}")
-print(f"Match: {data_to_encrypt == decrypted}")
+Features
+Secure AES-256 encryption for your password vault.
 
+Generate strong, random passwords.
+
+Retrieve and copy passwords to your clipboard.
+
+Simple CLI interface.
+
+Installation
+Clone the repository:
+
+bash
+git clone <your-github-repo-url>
+cd lox
+Set up a virtual environment and install dependencies:
+
+bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+pip install -r requirements.txt
+Usage
+Lox is a command-line tool. Begin by initializing your vault, then add and retrieve credentials as needed.
+
+1. Initialize the vault
+This command creates a new encrypted password vault.
+
+bash
+python3 main.py init
+2. Add a new password
+Add a new password for a service, optionally generating a custom password.
+
+bash
+python3 main.py add --name github
+You can also specify password generation options:
+
+bash
+python3 main.py add --name google --length 24 --no-symbols
+3. Retrieve a password
+Retrieve a password for a service and copy it to your clipboard.
+
+bash
+python3 main.py get --name github
+4. Reset the vault
+This command permanently deletes all data from your vault.
+
+bash
+python3 main.py reset
+Contributing
+We welcome contributions! Please feel free to open a pull request or submit an issue.
