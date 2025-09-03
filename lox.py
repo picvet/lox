@@ -1,9 +1,9 @@
 import argparse
 import getpass
 import os
+import sys
 
-from core.clipboard import copy_to_clipboard
-from core.password_gen import generate_password
+from core.core import VaultManager, copy_to_clipboard, generate_password
 from core.storage import Vault
 
 
@@ -35,72 +35,35 @@ def main():
         help="Reset the vault (deletes all data)",
     )
 
-    # Generate command parser
-    parser_generate = subparsers.add_parser(
-        "generate",
-        help="Generate a new random password",
+    # Add command parser
+    parser_add = subparsers.add_parser(
+        "add",
+        help="Add a new credential entry",
     )
-    parser_generate.add_argument(
-        "--name",
-        "-n",
-        help="Name to associate with this password (for saving later)",
-    )
-    parser_generate.add_argument(
+    parser_add.add_argument(
         "--length",
         "-l",
         type=int,
         default=16,
         help="Length of the password (default: 16)",
     )
-    parser_generate.add_argument(
+    parser_add.add_argument(
         "--no-symbols",
         action="store_false",
         dest="symbols",
         help="Exclude symbols from the password",
     )
-    parser_generate.add_argument(
+    parser_add.add_argument(
         "--no-digits",
         action="store_false",
         dest="digits",
         help="Exclude digits from the password",
     )
-    parser_generate.add_argument(
+    parser_add.add_argument(
         "--no-uppercase",
         action="store_false",
         dest="uppercase",
         help="Exclude uppercase letters from the password",
-    )
-    parser_generate.add_argument(
-        "--copy",
-        "-c",
-        action="store_true",
-        help="Copy the generated password to clipboard",
-    )
-
-    # Add command - Add a password to the vault
-    parser_add = subparsers.add_parser(
-        "add",
-        help="Add a password to the vault",
-    )
-    parser_add.add_argument(
-        "service",
-        help="Name of the service (e.g. github, email)",
-    )
-    parser_add.add_argument(
-        "--username",
-        "-u",
-        required=True,
-        help="Username for the service",
-    )
-    parser_add.add_argument(
-        "--password",
-        "-p",
-        help="Password to store {prompt if not provided}",
-    )
-    parser_add.add_argument(
-        "--vault-path",
-        default="data/vault.enc",
-        help="Path to the vault file",
     )
 
     # List command - Show all services in vault
@@ -115,8 +78,6 @@ def main():
 
     if args.command == "init":
         handle_init_command()
-    elif args.command == "generate":
-        handle_generate_command(args)
     elif args.command == "reset":
         handle_reset_command()
     elif args.command == "add":
@@ -163,38 +124,11 @@ def handle_init_command():
         print("✗ Failed to create vault. Please try again.")
 
 
-def handle_generate_command(args):
-    """Handle generate command - create and save passwords."""
-    try:
-        password = generate_password(
-            length=args.length,
-            use_symbols=args.symbols,  # FIXED: use_symbol -> use_symbols
-            use_digits=args.digits,
-            use_uppercase=args.uppercase,
-        )
-
-        print(f"Generated password: {password}")
-
-        # Only copy if --copy flag is provided
-        if args.copy:
-            if copy_to_clipboard(password):
-                print("✓ Copied to clipboard!")
-            else:
-                print("✗ Failed to copy to clipboard")
-
-        if args.name and args.verbose:
-            print(f"Password generated for: {args.name}")
-
-    except ValueError as e:
-        print(f"Error: {e}")
-
-
 def handle_reset_command():
     """Handle reset command - delete and recreate vault."""
     vault = Vault()
 
     if not vault.vault_exists():
-        # FIXED: value -> vault
         print("No vault exists. Use 'lox init' to create one.")
         return
 
@@ -221,16 +155,82 @@ def handle_reset_command():
         print(f"✗ Error resetting vault: {e}")
 
 
+def _get_application_name(vault: Vault, master_password: str) -> str:
+    """
+    Prompts the user for a new application name and validates the input.
+    Checks if the name already exists in the vault.
+    """
+
+
 # Placeholder functions for add and list commands
+
+
 def handle_add_command(args):
     """Handle add command - add a password to the vault."""
-    print("Add command not yet implemented.")
-    print(f"Would add service: {args.service}")
-    print(f"Username: {args.username}")
-    if args.password:
-        print(f"Password: {args.password}")
-    else:
-        print("Password would be prompted")
+    try:
+        # Create instances of the core classes
+        vault = Vault()
+        manager = VaultManager(vault)
+
+        # Get the master password from the user
+        master_password = getpass.getpass("Enter master password: ")
+
+        # Load the vault data using the manager
+        # The manger handles all th eerror checking (vault exists, master
+        # password is incorrect)
+        try:
+            vault_data = manager.get_vault_data(master_password)
+        except (FileNotFoundError, ValueError) as e:
+            print(f"Error: {e}.")
+            return
+
+        # Get the application name from the user with vaulidation
+        while True:
+            name = input("Enter name of application: ").strip()
+            if not name:
+                print("Application name cannot be empty. Please try again.")
+                continue
+
+            # check if the name already exists in the vault
+            if name in vault_data["services"]:
+                print(f"'{name}' already exists. Please choose a different name.")
+                continue
+
+            break
+
+        # Generate the new password
+        password = generate_password(
+            length=args.length,
+            use_symbol=args.symbols,
+            use_digits=args.digits,
+            use_uppercase=args.uppercase,
+        )
+
+        # Add new password entry
+        vault_data["services"][name] = {"password": password}
+
+        # Save the updated vault
+        if manager.save_vault_data(vault_data, master_password):
+            print(f"✓ Password saved for '{name}'")
+        else:
+            print("✗ Failed to save password.")
+            return
+
+        # Handle clipboard and verbose output
+        print(f"Generated password: {password}")
+        if copy_to_clipboard(password):
+            print("✓ Copied to clipboard!")
+        else:
+            print("✗ Failed to copy to clipboard.")
+
+        if args.verbose:
+            print(
+                f"Password generated with length {args.length}, symbols={
+                    args.symbols}, digits={args.digits}, uppercase={args.uppercase}."
+            )
+    except Exception as e:
+        print(f"An unexpected error occured: {e}")
+        sys.exit(1)
 
 
 def handle_list_command(args):
