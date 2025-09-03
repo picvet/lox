@@ -149,7 +149,6 @@ def handle_reset_command():
 
 
 def handle_get_command(args):
-    print("Inside the get command method")
     try:
         vault = Vault()
         manager = VaultManager(vault)
@@ -175,6 +174,70 @@ def handle_get_command(args):
             print("✓ Copied to clipboard!")
         else:
             print("✗ Failed to copy to clipboard.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sys.exit(1)
+
+
+def handle_delete_command(args):
+    try:
+        vault = Vault()
+        manager = VaultManager(vault)
+
+        master_password = getpass.getpass("Enter master password: ")
+
+        try:
+            vault_data = manager.get_vault_data(master_password)
+        except (FileNotFoundError, ValueError) as e:
+            print(f"Error: {e}")
+            return
+
+        name = args.name
+
+        if name not in vault_data["services"]:
+            print(f"Error: '{name}' not found in the vault.")
+            return
+
+        confirmation = input(f"Are you sure you want to delete {name} ? (y/n): ")
+
+        if confirmation.lower() not in ["y", "yes"]:
+            print("Delete cancelled.")
+            return
+
+        del vault_data["services"][name]
+
+        if manager.save_vault_data(vault_data, master_password):
+            print(f"✓ Password for '{name}' deleted.")
+        else:
+            print(f"✗ Failed to delete password for '{name}'.")
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sys.exit(1)
+
+
+def handle_list_command():
+    try:
+        vault = Vault()
+        manager = VaultManager(vault)
+
+        master_password = getpass.getpass("Enter master password: ")
+
+        try:
+            vault_data = manager.get_vault_data(master_password)
+        except (FileNotFoundError, ValueError) as e:
+            print(f"Error: {e}")
+            return
+
+        services = vault_data.get("services", {})
+        if not services:
+            print("No services stored in the vault.")
+            return
+
+        print("Stored services:")
+        for name in services.keys():
+            print(f"- {name}")
+
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         sys.exit(1)

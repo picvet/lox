@@ -1,7 +1,9 @@
 import argparse
+import sys
 
-from core.handlers import (handle_add_command, handle_get_command,
-                           handle_init_command, handle_reset_command)
+from core.handlers import (handle_add_command, handle_delete_command,
+                           handle_get_command, handle_init_command,
+                           handle_list_command, handle_reset_command)
 
 
 def main():
@@ -30,6 +32,12 @@ def main():
     subparsers.add_parser(
         "reset",
         help="Reset the vault (deletes all data)",
+    )
+
+    # List command - show all stored services
+    subparsers.add_parser(
+        "list",
+        help="List all stored service names",
     )
 
     # Add command parser
@@ -79,6 +87,17 @@ def main():
         help="Name of the application",
     )
 
+    # Delete command parser
+    parser_delete = subparsers.add_parser(
+        "delete",
+        help="Deletes a stored credential",
+    )
+    parser_delete.add_argument(
+        "--name",
+        "-n",
+        help="Name of the application",
+    )
+
     args = parser.parse_args()
 
     if args.command == "init":
@@ -89,7 +108,15 @@ def main():
         handle_add_command(args)
     elif args.command == "get":
         handle_get_command(args)
+    elif args.command == "delete":
+        handle_delete_command(args)
+    elif args.command == "list":
+        handle_list_command()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user.")
+        sys.exit(1)
