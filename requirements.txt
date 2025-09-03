@@ -1,2 +1,6 @@
+# Program dependencies
 cryptography
 copykitten
+
+# Tests
+pytest

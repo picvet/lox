@@ -1,7 +1,9 @@
 import argparse
+import sys
 
-from core.clipboard import copy_to_clipboard
-from core.password_gen import generate_password
+from core.handlers import (handle_add_command, handle_delete_command,
+                           handle_get_command, handle_init_command,
+                           handle_list_command, handle_reset_command)
 
 
 def main():
@@ -20,74 +22,101 @@ def main():
         dest="command", help="Available commands", required=True
     )
 
-    # Generate command parser
-    parser_generate = subparsers.add_parser(
-        "generate", help="Generate a new random password"
+    # Init command - Create a new vault
+    subparsers.add_parser(
+        "init",
+        help="Initialize a new password vault",
     )
 
-    parser_generate.add_argument(
-        "--name", "-n", help="Name to associate with this password (for saving later)"
+    # Reset command - Rest the vault
+    subparsers.add_parser(
+        "reset",
+        help="Reset the vault (deletes all data)",
     )
-    parser_generate.add_argument(
+
+    # List command - show all stored services
+    subparsers.add_parser(
+        "list",
+        help="List all stored service names",
+    )
+
+    # Add command parser
+    parser_add = subparsers.add_parser(
+        "add",
+        help="Add a new credential entry",
+    )
+    parser_add.add_argument(
+        "--name",
+        "-n",
+        help="Name of the application for this password",
+    )
+    parser_add.add_argument(
         "--length",
         "-l",
         type=int,
         default=16,
         help="Length of the password (default: 16)",
     )
-    parser_generate.add_argument(
+    parser_add.add_argument(
         "--no-symbols",
         action="store_false",
         dest="symbols",
         help="Exclude symbols from the password",
     )
-    parser_generate.add_argument(
+    parser_add.add_argument(
         "--no-digits",
         action="store_false",
         dest="digits",
         help="Exclude digits from the password",
     )
-    parser_generate.add_argument(
+    parser_add.add_argument(
         "--no-uppercase",
         action="store_false",
         dest="uppercase",
         help="Exclude uppercase letters from the password",
     )
-    parser_generate.add_argument(
-        "--copy",
-        "-c",
-        action="store_true",
-        help="Copy the generated password to clipboard",
+
+    # Get command parser
+    parser_get = subparsers.add_parser(
+        "get",
+        help="Retrieve a stored credential",
+    )
+    parser_get.add_argument(
+        "--name",
+        "-n",
+        help="Name of the application",
+    )
+
+    # Delete command parser
+    parser_delete = subparsers.add_parser(
+        "delete",
+        help="Deletes a stored credential",
+    )
+    parser_delete.add_argument(
+        "--name",
+        "-n",
+        help="Name of the application",
     )
 
     args = parser.parse_args()
 
-    if args.command == "generate":
-        try:
-            password = generate_password(
-                length=args.length,
-                use_symbol=args.symbols,
-                use_digits=args.digits,
-                use_uppercase=args.uppercase,
-            )
-
-            print(f"Generated password: {password}")
-
-            # Copy to clipboard if requested
-            if args.copy:
-                if copy_to_clipboard(password):
-                    print("✓ Copied to clipboard!")
-                else:
-                    print("✗ Failed to copy to clipboard")
-
-            if args.name and args.verbose:
-                print(f"Password generated for: {args.name}")
-
-        except ValueError as e:
-            print(f"Error: {e}")
-            if args.verbose:
-                print("Please check your input parameters and try again.")
+    if args.command == "init":
+        handle_init_command()
+    elif args.command == "reset":
+        handle_reset_command()
+    elif args.command == "add":
+        handle_add_command(args)
+    elif args.command == "get":
+        handle_get_command(args)
+    elif args.command == "delete":
+        handle_delete_command(args)
+    elif args.command == "list":
+        handle_list_command()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user.")
+        sys.exit(1)
