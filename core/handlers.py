@@ -72,8 +72,7 @@ def handle_add_command(args):
 
         if args.verbose:
             print(
-                f"Password generated with length {args.length}, symbols={
-                    args.symbols}, digits={args.digits}, uppercase={args.uppercase}."
+                f"Password generated with length {args.length}, symbols={args.symbols}, digits={args.digits}, uppercase={args.uppercase}."
             )
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
