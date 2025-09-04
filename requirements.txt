@@ -4,3 +4,4 @@ copykitten
 
 # Tests
 pytest
+pytest-cov
