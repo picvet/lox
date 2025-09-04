@@ -29,3 +29,9 @@ jobs:
         run: |
           python -m pytest tests/test_cli.py -v 
 
+  required-checks:
+    runs-on: ubuntu-latest
+    needs: run-tests
+    steps:
+      - name: All tests passed
+        run: echo "All tests completed successfully"
