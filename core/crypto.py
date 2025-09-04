@@ -12,7 +12,10 @@ KEY_LENGTH = 32
 PBKDF2_ITERATIONS = 100000
 
 
-def derive_key(master_password: str, salt: bytes = None) -> Tuple[bytes, bytes]:
+def derive_key(
+    master_password: str,
+    salt: bytes = None,
+) -> Tuple[bytes, bytes]:
     """
     Derive a cryptographic key from a master password using PBKDF2.
 
@@ -44,7 +47,10 @@ def derive_key(master_password: str, salt: bytes = None) -> Tuple[bytes, bytes]:
     return key, salt
 
 
-def encrypt_data(data: str, key: bytes) -> bytes:
+def encrypt_data(
+    data: str,
+    key: bytes,
+) -> bytes:
     """
     Encrypt data using the derived key.
 
@@ -63,7 +69,10 @@ def encrypt_data(data: str, key: bytes) -> bytes:
         raise ValueError(f"Encryption failed: {e}")
 
 
-def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
+def decrypt_data(
+    encrypted_data: bytes,
+    key: bytes,
+) -> str:
     """
     Decrypt data using the derived key.
 
