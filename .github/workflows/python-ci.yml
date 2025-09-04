@@ -1,6 +1,10 @@
 name: Run Tests
 
-on: [push]
+on:
+  push:
+    branches: ['main', 'dev']
+  pull_request:
+    branches: ['main', 'dev']
 
 jobs:
   run-tests:
@@ -13,8 +17,10 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies 
         run: | 
-          python3 -m pip install --upgrade pip 
+          python3 -m pip install --upgrade pip
           pip install -r requirements
+
       - name: Run tests 
-        run: python test/ --doctest-modules --junitxml-junit/tests-results.xml
+        run: |
+          pytest
 
