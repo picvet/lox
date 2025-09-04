@@ -48,7 +48,7 @@ def handle_add_command(args):
         # Generate the new password
         password = generate_password(
             length=args.length,
-            use_symbol=args.symbols,
+            use_symbols=args.symbols,
             use_digits=args.digits,
             use_uppercase=args.uppercase,
         )
