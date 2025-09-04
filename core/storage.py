@@ -4,8 +4,6 @@ from typing import Any, Dict
 
 from core.crypto import decrypt_data, derive_key, encrypt_data
 
-# Custom exception for vault errors
-
 
 class VaultError(Exception):
     """Custom exception for errors related to vault operations."""
@@ -99,7 +97,6 @@ class Vault:
             return json.loads(decrypted_json)
 
         except (ValueError, KeyError, TypeError) as e:
-            # These exceptions often indicate a decryption failure (wrong password,corrupt data)
             raise VaultError(
                 "Failed to decrypt vault. The master password may be incorrect or the file is corrupted."
             ) from e

@@ -14,7 +14,10 @@ def main():
 
     # Global arguments that must come BEFORE the subcommand
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="increase output verbosity"
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="increase output verbosity",
     )
 
     # Create subparsers for different commands

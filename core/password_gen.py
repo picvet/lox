@@ -48,3 +48,13 @@ def generate_password(
     password = "".join(secrets.choice(all_chars) for _ in range(length))
 
     return password
+
+
+# This is a very long comment that should definetely exceed eight-ychatacters and should
+# be automatically wrapped by formatter
+
+
+def very_long_function_name_with_many_characters(
+    parameter1: str, parameter2: str, parameter3: str, parameter4: str
+):
+    return "this is a very long string that might also need to be wrapped properly"
