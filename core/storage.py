@@ -48,7 +48,6 @@ class Vault:
             json_data = json.dumps(data)
             encrypted_data = encrypt_data(json_data, key)
 
-            # Store salt length + salt + encrypted data
             with open(self.vault_path, "wb") as f:
                 f.write(len(salt).to_bytes(4, "big"))
                 f.write(salt)
@@ -59,7 +58,6 @@ class Vault:
             print(f"File system error saving vault: {e}")
             return False
         except Exception as e:
-            # Catching a broad exception is okay here for a file operation
             print(f"Error saving vault: {e}")
             return False
 
@@ -73,27 +71,20 @@ class Vault:
         """
         if not self.vault_exists():
             raise FileNotFoundError(
-                f"Vault file not found at '{
-                    self.vault_path}'. Please initialize first."
+                "Vault file not found at '"
+                f"{self.vault_path}'. Please initialize first."
             )
 
         try:
-            # Read the entire file
             with open(self.vault_path, "rb") as f:
-                # Read salt length (first 4 bytes)
                 salt_length = int.from_bytes(f.read(4), "big")
-                # Read salt
                 salt = f.read(salt_length)
-                # Read remaining data (encrypted)
                 encrypted_data = f.read()
 
-            # Derive the key using the *retrieved* salt
             key, _ = derive_key(master_password, salt=salt)
 
-            # Decrypt the data
             decrypted_json = decrypt_data(encrypted_data, key)
 
-            # Parse the JSON
             return json.loads(decrypted_json)
 
         except (ValueError, KeyError, TypeError) as e:
@@ -102,7 +93,6 @@ class Vault:
             ) from e
 
         except Exception as e:
-            # Catch any other unexpected errors
             raise VaultError(
                 f"An unexpected error occurred while loading the vault: {e}"
             ) from e
