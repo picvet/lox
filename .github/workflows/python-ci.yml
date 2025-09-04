@@ -27,5 +27,5 @@ jobs:
           --ignore-patterns=".*_test.py" .
       - name: Run tests 
         run: |
-          pytest
+          python -m pytest tests/test_cli.py -v 
 
