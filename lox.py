@@ -62,18 +62,21 @@ def main():
     )
     parser_add.add_argument(
         "--no-symbols",
+        "-ns",
         action="store_false",
         dest="symbols",
         help="Exclude symbols from the password",
     )
     parser_add.add_argument(
         "--no-digits",
+        "-nd",
         action="store_false",
         dest="digits",
         help="Exclude digits from the password",
     )
     parser_add.add_argument(
         "--no-uppercase",
+        "-nu",
         action="store_false",
         dest="uppercase",
         help="Exclude uppercase letters from the password",
