@@ -2,7 +2,7 @@
 cryptography
 copykitten
 boto3
-secretstorage
+keyring
 
 # Tests
 pytest
