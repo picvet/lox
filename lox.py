@@ -31,6 +31,11 @@ def main():
         help="Initialize a new password vault",
     )
 
+    subparsers.add_parser(
+        "setup",
+        help="Setup the cloud account for AWS to sync to",
+    )
+
     # Reset command - Rest the vault
     subparsers.add_parser(
         "reset",
@@ -118,6 +123,10 @@ def main():
         handle_delete_command(args)
     elif args.command == "list":
         handle_list_command()
+    elif args.command == "setup":
+        from scripts.setup_credentials import setup_aws_credentials
+
+        setup_aws_credentials()
 
 
 if __name__ == "__main__":
