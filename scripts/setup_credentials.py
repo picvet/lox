@@ -1,10 +1,10 @@
 """Interactive AWS credentials setup for Lox Password Manager."""
 
 import logging
-from typing import Optional, Tuple
+from typing import Tuple
 
 from core.credential_manager import CredentialManager
-from core.utils.validation import validate_aws_credentials
+from core.utils.validation import validate_aws_role_arn
 
 logger = logging.getLogger(__name__)
 
@@ -26,22 +26,17 @@ def setup_aws_credentials() -> None:
         print("🔐 AWS Credentials Setup for Lox Password Manager")
         print("=" * 50)
 
-        # Get credentials with validation
         credentials = _prompt_for_credentials()
 
-        # Validate before storing
-        if not validate_aws_credentials(credentials[0], credentials[1]):
-            raise CredentialSetupError("Invalid AWS credentials provided")
+        if not validate_aws_role_arn(credentials[0]):
+            raise CredentialSetupError("Invalid AWS role arn provided!")
 
-        # Store securely
         credential_manager = CredentialManager()
-        expiry_days = 30
 
-        if credential_manager.store_credentials(*credentials, expiry_days):
+        if credential_manager.store_credentials(*credentials):
             print("✅ Credentials stored securely!")
             print(f"\nNext steps:")
             print("1. Run 'lox sync test' to verify connection")
-            print(f"2. Credentials will be valid for {expiry_days} days")
         else:
             raise CredentialSetupError("Failed to store credentials securely")
 
@@ -53,21 +48,17 @@ def setup_aws_credentials() -> None:
         raise CredentialSetupError(f"Setup failed: {e}") from e
 
 
-def _prompt_for_credentials() -> Tuple[str, str, str]:
+def _prompt_for_credentials() -> Tuple[str, str]:
     """Prompt user for AWS credentials with input validation."""
     try:
-        aws_access_key = input("Enter AWS Access Key ID: ").strip()
-        if not aws_access_key:
-            raise ValueError("Access Key ID cannot be empty")
+        role_arn = input("Enter role arn: ").strip()
+        if not role_arn:
+            raise ValueError("Role arn cannot be empty")
 
-        aws_secret_key = input("Enter AWS Secret Access Key: ").strip()
-        if not aws_secret_key:
-            raise ValueError("Secret Access Key cannot be empty")
-
-        region = input("Enter AWS Region (default: us-east-1): ").strip()
+        region = input("Enter AWS Region name: ").strip()
         region = region or "us-east-1"
 
-        return aws_access_key, aws_secret_key, region
+        return role_arn, region
 
     except ValueError as e:
         print(f"❌ Validation error: {e}")
@@ -75,16 +66,14 @@ def _prompt_for_credentials() -> Tuple[str, str, str]:
 
 
 def store_credentials_securely(
-    access_key: str,
-    secret_key: str,
+    role_arn: str,
     region: str,
 ) -> bool:
     """
     Store credentials using platform-specific secure storage.
 
     Args:
-        access_key: AWS Access Key ID
-        secret_key: AWS Secret Access Key
+        role_arn: AWS role arn
         region: AWS region
 
     Returns:
@@ -92,7 +81,7 @@ def store_credentials_securely(
     """
     try:
         credential_manager = CredentialManager()
-        return credential_manager.store_credentials(access_key, secret_key, region)
+        return credential_manager.store_credentials(role_arn, region)
     except Exception as e:
         logger.warning("Secure storage failed: %s", e)
         return False

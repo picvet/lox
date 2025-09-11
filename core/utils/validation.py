@@ -3,28 +3,23 @@
 import re
 
 
-def validate_aws_credentials(
-    access_key: str,
-    secret_key: str,
+def validate_aws_role_arn(
+    role_arn: str,
 ) -> bool:
     """
     Validate AWS credential format.
 
     Args:
-        access_key: AWS Access Key ID
-        secret_key: AWS Secret Access Key
+        role_arn: AWS Access Key ID
 
     Returns:
         bool: True if credentials appear valid
     """
-    # Basic format validation
-    access_key_pattern = r"^[A-Z0-9]{20}$"
-    secret_key_pattern = r"^[A-Za-z0-9/+=]{40}$"
+    role_arn_pattern = r"arn:aws:iam::\d{12}:role/[^:]+"
 
-    access_key_valid = bool(re.match(access_key_pattern, access_key))
-    secret_key_valid = bool(re.match(secret_key_pattern, secret_key))
+    role_arn_valid = bool(re.match(role_arn_pattern, role_arn))
 
-    return access_key_valid and secret_key_valid
+    return role_arn_valid
 
 
 def validate_aws_region(region: str) -> bool:
