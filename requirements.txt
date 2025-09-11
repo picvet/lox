@@ -1,6 +1,8 @@
 # Program dependencies
 cryptography
 copykitten
+boto3
+keyring
 
 # Tests
 pytest
