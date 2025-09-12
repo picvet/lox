@@ -94,3 +94,13 @@ class AWSSTSClient:
     def are_credentials_configured(self) -> bool:
         """Check if credentials are configured (no expiry check)"""
         return self.cred_manager.are_credentials_configured()
+
+    def get_dynamodb_resource(self):
+        temp_creds = self.assume_role()
+        return boto3.resource(
+            "dynamodb",
+            region_name=self.region,
+            aws_access_key_id=temp_creds["access_key"],
+            aws_secret_access_key=temp_creds["secret_key"],
+            aws_session_token=temp_creds["session_token"],
+        )

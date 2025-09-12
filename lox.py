@@ -3,8 +3,8 @@ import sys
 
 from core.handlers import (handle_add_command, handle_delete_command,
                            handle_get_command, handle_init_command,
-                           handle_list_command, handle_push_command,
-                           handle_reset_command)
+                           handle_list_command, handle_pull_command,
+                           handle_push_command, handle_reset_command)
 
 
 def main():
@@ -39,7 +39,11 @@ def main():
 
     subparsers.add_parser(
         "push",
-        help="Push encrypted vault to dynamoDB, for synching",
+        help="Push encrypted vault to DynamoDB, for synching",
+    )
+    subparsers.add_parser(
+        "pull",
+        help="Pull encrypted vault from DynamoDB",
     )
     # Reset command - Rest the vault
     subparsers.add_parser(
@@ -130,6 +134,9 @@ def main():
         handle_list_command()
     elif args.command == "push":
         handle_push_command()
+    elif args.command == "pull":
+        handle_pull_command()
+
     elif args.command == "setup":
         from scripts.setup_credentials import setup_aws_credentials
 

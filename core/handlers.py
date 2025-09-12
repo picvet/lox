@@ -247,6 +247,12 @@ def handle_push_command():
     try:
         from core.resources.aws.aws_dynamo_service import DynamoDBService
 
-        DynamoDBService().put_item()
+        DynamoDBService().put_item(common_name="PERCY_PASS")
     except Exception as e:
         print(f"Error pushing to sync: {e}")
+
+
+def handle_pull_command():
+    from core.resources.aws.aws_dynamo_service import DynamoDBService
+
+    print(DynamoDBService().get_last_item_query())
