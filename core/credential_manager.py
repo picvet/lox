@@ -5,7 +5,7 @@ import json
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import keyring
 
@@ -37,18 +37,18 @@ class CredentialManager:
     def store_credentials(
         self,
         role_arn: str,
-        region: str,
+        access_key: str,
+        secret_key: str,
     ) -> bool:
         """
         Store credentials using the most secure available backend.
         """
         credential_data = {
             "role_arn": role_arn,
-            "region": region,
-            "storage_backend": None,
+            "access_key": access_key,
+            "secret_key": secret_key,
         }
 
-        # Try storage backends in order of preference
         for backend in self._backend_preference:
             try:
                 storage_method = self._get_storage_method(backend)
@@ -65,40 +65,38 @@ class CredentialManager:
 
         raise CredentialStorageError("All credential storage methods failed")
 
-    def get_credentials(self) -> Tuple[
-        Optional[str],
-        Optional[str],
-    ]:
+    def get_credentials(self) -> Optional[Dict[str, str]]:
         """
         Retrieve stored credentials by trying all backends in order.
         """
-        # First, try to get from the last used backend (if known)
         if self._used_backend:
             creds = self._get_from_backend(self._used_backend)
-            if creds and not self._are_credentials_expired(creds):
+            if creds:
                 return creds
 
-        # If no stored backend or retrieval failed, try all backends in order
         for backend in self._backend_preference:
             try:
                 creds = self._get_from_backend(backend)
                 if creds:
-                    # Check if credentials include backend info
-                    if isinstance(creds, tuple) and len(creds) == 3:
-                        # Regular tuple format, check expiry
-                        if not self._are_credentials_expired(creds):
-                            self._used_backend = backend
-                            return creds
-                    else:
-                        # Shouldn't happen, but handle gracefully
-                        logger.warning(
-                            "Unexpected credential format from %s", backend.value
-                        )
+                    return self.normalize_credentials(creds)
             except Exception as e:
                 logger.debug("Retrieval from %s failed: %s", backend.value, e)
                 continue
 
         return None
+
+    def normalize_credentials(self, creds) -> Dict[str, str]:
+        if isinstance(creds, tuple):
+            role_arn, access_key, secret_key = creds
+            return {
+                "role_arn": role_arn,
+                "access_key": access_key,
+                "secret_key": secret_key,
+            }
+        elif isinstance(creds, dict):
+            return creds
+        else:
+            logger.warning(f"Unexpected credential format: {creds}")
 
     def _get_storage_method(self, backend: StorageBackend):
         """Get the storage method for a given backend."""
@@ -128,7 +126,7 @@ class CredentialManager:
             logger.debug("Keyring storage failed: %s", e)
             return False
 
-    def _get_from_keyring(self) -> Optional[Tuple[str, str]]:
+    def _get_from_keyring(self) -> Optional[Tuple[str, str, str, str]]:
         """Retrieve credentials from keyring."""
         try:
             user = getpass.getuser()
@@ -142,7 +140,8 @@ class CredentialManager:
 
                 if isinstance(creds_data, dict):
                     role_arn = creds_data.get("role_arn")
-                    region = creds_data.get("region")
+                    access_key = creds_data.get("access_key")
+                    secret_key = creds_data.get("secret_key")
 
                     if role_arn:
                         backend_str = creds_data.get("storage_backend")
@@ -152,7 +151,7 @@ class CredentialManager:
                             except ValueError:
                                 pass
 
-                        return role_arn, region
+                        return role_arn, access_key, secret_key
                 else:
                     logger.warning("Found old credential format in keyring")
                     return None
@@ -181,7 +180,7 @@ class CredentialManager:
             logger.debug("Env file storage failed: %s", e)
             return False
 
-    def _get_from_env_file(self) -> Optional[Tuple[str, str]]:
+    def _get_from_env_file(self) -> Optional[Tuple[str, str, str, str]]:
         """Retrieve credentials from environment file."""
         try:
             env_file = (
@@ -192,7 +191,8 @@ class CredentialManager:
 
                 if isinstance(creds_data, dict):
                     role_arn = creds_data.get("role_arn")
-                    region = creds_data.get("region")
+                    access_key = creds_data.get("access_key")
+                    secret_key = creds_data.get("secret_key")
 
                     if role_arn:
                         backend_str = creds_data.get("storage_backend")
@@ -202,7 +202,7 @@ class CredentialManager:
                             except ValueError:
                                 pass
 
-                        return role_arn, region
+                        return role_arn, access_key, secret_key
 
         except (IOError, json.JSONDecodeError, AttributeError) as e:
             logger.debug("Env file retrieval failed: %s", e)
@@ -213,14 +213,12 @@ class CredentialManager:
         """Remove stored credentials from all backends."""
         success = True
 
-        # Clear keyring
         try:
             user = getpass.getuser()
             keyring.delete_password(f"{self.service_name}-credentials", user)
         except keyring.errors.KeyringError:
             success = False
 
-        # Clear env file
         try:
             env_file = (
                 Path.home() / ".config" / self.service_name.lower() / "credentials.json"
@@ -232,7 +230,3 @@ class CredentialManager:
 
             self._used_backend = None
         return success
-
-    def get_storage_backend(self) -> Optional[str]:
-        """Get the currently used storage backend."""
-        return self._used_backend.value if self._used_backend else None

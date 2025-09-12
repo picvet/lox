@@ -3,7 +3,8 @@ import sys
 
 from core.handlers import (handle_add_command, handle_delete_command,
                            handle_get_command, handle_init_command,
-                           handle_list_command, handle_reset_command)
+                           handle_list_command, handle_push_command,
+                           handle_reset_command)
 
 
 def main():
@@ -32,15 +33,14 @@ def main():
     )
 
     subparsers.add_parser(
-        "login",
-        help="Login the cloud account for AWS to sync to",
+        "setup",
+        help="Setup the IAM role for AWS to sync with",
     )
 
     subparsers.add_parser(
-        "setup",
-        help="Setup the cloud account for AWS to sync to",
+        "push",
+        help="Push encrypted vault to dynamoDB, for synching",
     )
-
     # Reset command - Rest the vault
     subparsers.add_parser(
         "reset",
@@ -128,22 +128,12 @@ def main():
         handle_delete_command(args)
     elif args.command == "list":
         handle_list_command()
+    elif args.command == "push":
+        handle_push_command()
     elif args.command == "setup":
         from scripts.setup_credentials import setup_aws_credentials
 
         setup_aws_credentials()
-    elif args.command == "login":
-        from core.credential_manager import CredentialManager
-
-        credential_manager = CredentialManager()
-        access_key, secret_key, region = credential_manager.get_credentials()
-
-        if access_key and secret_key:
-            print(f"Access Key: {access_key}")
-            print(f"Secret Key: {secret_key}")
-            print(f"Region: {region}")
-        else:
-            print("No credentials found or credentials expired")
 
 
 if __name__ == "__main__":

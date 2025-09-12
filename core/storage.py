@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import Any, Dict
 
 from core.crypto import decrypt_data, derive_key, encrypt_data
@@ -12,7 +13,8 @@ class VaultError(Exception):
 
 
 class Vault:
-    def __init__(self, vault_path: str = "data/vault.enc"):
+    def __init__(self):
+        vault_path = Path.home() / ".config" / "loxpasswordmanager" / "vault.enc"
         self.vault_path = vault_path
         self.ensure_data_dir()
 
@@ -76,6 +78,7 @@ class Vault:
             )
 
         try:
+
             with open(self.vault_path, "rb") as f:
                 salt_length = int.from_bytes(f.read(4), "big")
                 salt = f.read(salt_length)
@@ -96,3 +99,22 @@ class Vault:
             raise VaultError(
                 f"An unexpected error occurred while loading the vault: {e}"
             ) from e
+
+    def get_encrypted_vault(self) -> bytes:
+        """
+        Read the raw, encrypted vault data from the file.
+
+        This method does not attempt to decrypt the data. It's useful
+        for operations like backing up the vault file directly.
+        """
+        if not self.vault_exists():
+            raise FileNotFoundError(
+                "Vault file not found at '"
+                f"{self.vault_path}. Please initialize first."
+            )
+        try:
+            print("Trying to open the vault from path")
+            with open(self.vault_path, "rb") as f:
+                return f.read()
+        except IOError as e:
+            raise IOError(f"Error reading encrypted vault file: {e}")

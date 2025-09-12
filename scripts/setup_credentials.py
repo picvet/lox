@@ -4,7 +4,9 @@ import logging
 from typing import Tuple
 
 from core.credential_manager import CredentialManager
-from core.utils.validation import validate_aws_role_arn
+from core.utils.validation import (validate_aws_access_key,
+                                   validate_aws_role_arn,
+                                   validate_aws_secret_key)
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +28,23 @@ def setup_aws_credentials() -> None:
         print("🔐 AWS Credentials Setup for Lox Password Manager")
         print("=" * 50)
 
-        credentials = _prompt_for_credentials()
+        role_arn, access_key, secret_key = _prompt_for_credentials()
 
-        if not validate_aws_role_arn(credentials[0]):
+        if not validate_aws_role_arn(role_arn):
             raise CredentialSetupError("Invalid AWS role arn provided!")
+        if not validate_aws_secret_key(secret_key):
+            raise CredentialSetupError("Invalid AWS secret key!")
+        if not validate_aws_access_key(access_key):
+            raise CredentialSetupError("Invalid AWS access key provided!")
 
         credential_manager = CredentialManager()
 
-        if credential_manager.store_credentials(*credentials):
+        if credential_manager.store_credentials(
+            role_arn,
+            access_key,
+            secret_key,
+        ):
             print("✅ Credentials stored securely!")
-            print(f"\nNext steps:")
-            print("1. Run 'lox sync test' to verify connection")
         else:
             raise CredentialSetupError("Failed to store credentials securely")
 
@@ -48,17 +56,25 @@ def setup_aws_credentials() -> None:
         raise CredentialSetupError(f"Setup failed: {e}") from e
 
 
-def _prompt_for_credentials() -> Tuple[str, str]:
+def _prompt_for_credentials() -> Tuple[
+    str,
+    str,
+    str,
+]:
     """Prompt user for AWS credentials with input validation."""
     try:
         role_arn = input("Enter role arn: ").strip()
         if not role_arn:
             raise ValueError("Role arn cannot be empty")
 
-        region = input("Enter AWS Region name: ").strip()
-        region = region or "us-east-1"
+        access_key = input("Enter access key: ").strip()
+        if not access_key:
+            raise ValueError("Access key cannot be empty")
 
-        return role_arn, region
+        secret_key = input("Enter secret key: ").strip()
+        if not secret_key:
+            raise ValueError("Secret key cannot be empty")
+        return role_arn, access_key, secret_key
 
     except ValueError as e:
         print(f"❌ Validation error: {e}")

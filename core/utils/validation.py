@@ -22,15 +22,29 @@ def validate_aws_role_arn(
     return role_arn_valid
 
 
-def validate_aws_region(region: str) -> bool:
+def validate_aws_access_key(access_key: str) -> bool:
     """
-    Validate AWS region format.
+    Validate AWS Access Key ID.
 
     Args:
-        region: AWS region name
+        access_key: AWS Access Key ID
 
     Returns:
-        bool: True if region appears valid
+        bool: True if key appears valid
     """
-    region_pattern = r"^[a-z]{2}-[a-z]+-\d+$"
-    return bool(re.match(region_pattern, region))
+    access_key_pattern = r"^(AKIA|ASIA)[A-Z0-9]{16}$"
+    return bool(re.match(access_key_pattern, access_key))
+
+
+def validate_aws_secret_key(secret_key: str) -> bool:
+    """
+    Validate AWS Secret Access Key.
+
+    Args:
+        secret_key: AWS Secret Access Key
+
+    Returns:
+        bool: True if key appears valid
+    """
+    secret_key_pattern = r"^[A-Za-z0-9/+=]{40}$"
+    return bool(re.match(secret_key_pattern, secret_key))

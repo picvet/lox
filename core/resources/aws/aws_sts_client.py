@@ -1,7 +1,8 @@
 import logging
+from typing import Dict
 
 import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 
 from core.credential_manager import CredentialManager
 
@@ -11,26 +12,39 @@ logger = logging.getLogger(__name__)
 class AWSSTSClient:
     def __init__(self):
         self.cred_manager = CredentialManager()
+        self.region = "eu-north-1"
 
-    def assume_role(self, role_session_name: str = "LoxPasswordManager") -> dict:
+    def assume_role(self) -> Dict[str, str]:
         """
         Assume the configured IAM role and return temporary credentials.
         STS temporary credentials still expire (1 hour default).
         """
+        role_session_name = "LoxPasswordManager"
+        stored_creds = self.cred_manager.get_credentials()
+
+        if not stored_creds:
+            raise NoCredentialsError(
+                "No AWS credentials configured. Run 'lox sync setup'"
+            )
+
+        role_arn = stored_creds.get("role_arn")
+        access_key = stored_creds.get("access_key")
+        secret_key = stored_creds.get("secret_key")
+
+        if not role_arn:
+            raise ValueError("Role ARN not found in stored credentials")
+        if not access_key:
+            raise ValueError("Access key not found in stored credentials")
+        if not secret_key:
+            raise ValueError("Secret key not found in stored credentials")
+
         try:
-            stored_creds = self.cred_manager.get_credentials()
-            if not stored_creds:
-                raise NoCredentialsError(
-                    "No AWS credentials configured. Run 'lox sync setup'"
-                )
-
-            role_arn = stored_creds.get("role_arn")
-            region = stored_creds.get("region")
-
-            if not role_arn:
-                raise ValueError("Role ARN not found in stored credentials")
-
-            sts_client = boto3.client("sts", region_name=region)
+            sts_client = boto3.client(
+                "sts",
+                region_name=self.region,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+            )
 
             response = sts_client.assume_role(
                 RoleArn=role_arn,
@@ -44,20 +58,22 @@ class AWSSTSClient:
                 "secret_key": creds["SecretAccessKey"],
                 "session_token": creds["SessionToken"],
                 "expiration": creds["Expiration"].isoformat(),
+                "region": self.region,
             }
 
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "AccessDenied":
-                logger.error(
-                    "Access denied. Check if the role ARN is correct and you have permission to assume it."
-                )
+                logger.error("Access denied for role ARN '%s'.", role_arn)
             elif error_code == "NoSuchEntity":
-                logger.error("Role not found. Check if the role ARN exists.")
-            raise Exception(f"AWS STS error: {e}") from e
-        except Exception as e:
-            logger.error("Role assumption failed: %s", e)
-            raise
+                logger.error("Role ARN '%s' does not exist.", role_arn)
+            else:
+                logger.error("AWS STS client error: %s", e)
+            raise RuntimeError(f"AWS STS error: {e}") from e
+
+        except BotoCoreError as e:
+            logger.error("Low-level boto3 error: %s", e)
+            raise RuntimeError("Failed to communicate with AWS STS") from e
 
     def get_dynamodb_client(self):
         """Get DynamoDB client using assumed role credentials"""
@@ -66,9 +82,7 @@ class AWSSTSClient:
 
             return boto3.client(
                 "dynamodb",
-                region_name=self.cred_manager.get_credentials().get(
-                    "region",
-                ),
+                region_name=self.region,
                 aws_access_key_id=temp_creds["access_key"],
                 aws_secret_access_key=temp_creds["secret_key"],
                 aws_session_token=temp_creds["session_token"],
