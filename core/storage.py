@@ -118,3 +118,18 @@ class Vault:
                 return f.read()
         except IOError as e:
             raise IOError(f"Error reading encrypted vault file: {e}")
+
+    def sync_replace_local_file_content(
+        self,
+        cloud_bytes_content: bytes,
+    ) -> bool:
+        """
+        Replaces vault file content with the cloud version
+        """
+        try:
+            with open(self.vault_path, "wb") as f:
+                f.write(cloud_bytes_content)
+            return True
+        except IOError as e:
+            print(f"Error writing to file: {e}")
+            return False

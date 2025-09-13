@@ -50,21 +50,9 @@ class DynamoDBService:
 
             dynamoDB = self.sts_client.get_dynamodb_client()
 
-            # base64_encoded_vault_bytes = base64.b64encode(vault_bytes)
-            #
-            # string_vault_data = base64_encoded_vault_bytes.decode("ascii")
-            #
-            # base64_encoded_bytes = string_vault_data.encode("ascii")
-            #
-            # original_vault_bytes = base64.b64decode(base64_encoded_bytes)
-            #
-            # b_equal = original_vault_bytes == vault_bytes
-            # if b_equal:
-            #     print("Bytes are equal")
-
             item = {
                 "pk": {"S": "VAULT_DATA"},
-                "sk": {"S": unique_id},  # The unique ID is now the sort key
+                "sk": {"S": unique_id},
                 "common_name": {"S": common_name},
                 "timestamp_ms": {"N": current_time_ms},
                 "vault_data": {"S": string_vault_data},
@@ -103,7 +91,6 @@ class DynamoDBService:
             dynamoDB = self.sts_client.get_dynamodb_resource()
             table = dynamoDB.Table(self.table_name)
 
-            # The KeyConditionExpression must reference the GSI's Partition Key
             response = table.query(
                 IndexName="TimestampIndex",
                 KeyConditionExpression=Key("record_type").eq("DATA_VAULT"),
@@ -116,10 +103,19 @@ class DynamoDBService:
                 print("No items found.")
                 return None
 
-            # The boto3 resource API handles deserialization automatically,
-            # so you don't need the deserializer logic.
-            last_item = items[0]
-            return last_item
+            vault_data = items[0].get("vault_data")
+
+            base64_encoded_bytes = vault_data.encode("ascii")
+            cloud_bytes_content = base64.b64decode(base64_encoded_bytes)
+
+            was_successful = Vault().sync_replace_local_file_content(
+                cloud_bytes_content
+            )
+
+            if was_successful:
+                print("Successfully synched data from cloud")
+            else:
+                print("Data from cloud couldn't be synched.")
 
         except Exception as e:
             print(f"Error retrieving last item: {e}")
