@@ -26,13 +26,11 @@ def generate_password(
         small.
     """
 
-    # define character sets
     lowercase_letters = string.ascii_lowercase
     uppercase_letters = string.ascii_uppercase if use_uppercase else ""
     digits = string.digits if use_digits else ""
     symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?" if use_symbols else ""
 
-    # combine all allowed character sets
     all_chars = lowercase_letters + uppercase_letters + digits + symbols
 
     if not all_chars or (not use_symbols and not use_digits and not use_uppercase):
@@ -48,10 +46,6 @@ def generate_password(
     password = "".join(secrets.choice(all_chars) for _ in range(length))
 
     return password
-
-
-# This is a very long comment that should definetely exceed eight-ychatacters and should
-# be automatically wrapped by formatter
 
 
 def very_long_function_name_with_many_characters(

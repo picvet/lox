@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 class AWSSTSClient:
     def __init__(self):
         self.cred_manager = CredentialManager()
-        self.region = "eu-north-1"
 
     def assume_role(self) -> Dict[str, str]:
         """
@@ -30,6 +29,7 @@ class AWSSTSClient:
         role_arn = stored_creds.get("role_arn")
         access_key = stored_creds.get("access_key")
         secret_key = stored_creds.get("secret_key")
+        region = stored_creds.get("region")
 
         if not role_arn:
             raise ValueError("Role ARN not found in stored credentials")
@@ -37,11 +37,13 @@ class AWSSTSClient:
             raise ValueError("Access key not found in stored credentials")
         if not secret_key:
             raise ValueError("Secret key not found in stored credentials")
+        if not region:
+            raise ValueError("DynamoDB region not found in stored credentials")
 
         try:
             sts_client = boto3.client(
                 "sts",
-                region_name=self.region,
+                region_name=region,
                 aws_access_key_id=access_key,
                 aws_secret_access_key=secret_key,
             )
@@ -58,7 +60,7 @@ class AWSSTSClient:
                 "secret_key": creds["SecretAccessKey"],
                 "session_token": creds["SessionToken"],
                 "expiration": creds["Expiration"].isoformat(),
-                "region": self.region,
+                "region": region,
             }
 
         except ClientError as e:
@@ -80,9 +82,11 @@ class AWSSTSClient:
         try:
             temp_creds = self.assume_role()
 
+            stored_creds = self.cred_manager.get_credentials()
+
             return boto3.client(
                 "dynamodb",
-                region_name=self.region,
+                region_name=stored_creds.get("region"),
                 aws_access_key_id=temp_creds["access_key"],
                 aws_secret_access_key=temp_creds["secret_key"],
                 aws_session_token=temp_creds["session_token"],
@@ -97,9 +101,11 @@ class AWSSTSClient:
 
     def get_dynamodb_resource(self):
         temp_creds = self.assume_role()
+        stored_creds = self.cred_manager.get_credentials()
+
         return boto3.resource(
             "dynamodb",
-            region_name=self.region,
+            region_name=stored_creds.get("region"),
             aws_access_key_id=temp_creds["access_key"],
             aws_secret_access_key=temp_creds["secret_key"],
             aws_session_token=temp_creds["session_token"],

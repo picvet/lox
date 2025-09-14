@@ -8,12 +8,10 @@ from core.handlers import (handle_add_command, handle_delete_command,
 
 
 def main():
-    # Create the top-level parser
     parser = argparse.ArgumentParser(
         description="Lox - A simple CLI password manager", prog="lox"
     )
 
-    # Global arguments that must come BEFORE the subcommand
     parser.add_argument(
         "-v",
         "--verbose",
@@ -21,12 +19,10 @@ def main():
         help="increase output verbosity",
     )
 
-    # Create subparsers for different commands
     subparsers = parser.add_subparsers(
         dest="command", help="Available commands", required=True
     )
 
-    # Init command - Create a new vault
     subparsers.add_parser(
         "init",
         help="Initialize a new password vault",
@@ -45,19 +41,16 @@ def main():
         "pull",
         help="Pull encrypted vault from DynamoDB",
     )
-    # Reset command - Rest the vault
     subparsers.add_parser(
         "reset",
         help="Reset the vault (deletes all data)",
     )
 
-    # List command - show all stored services
     subparsers.add_parser(
         "list",
         help="List all stored service names",
     )
 
-    # Add command parser
     parser_add = subparsers.add_parser(
         "add",
         help="Add a new credential entry",
@@ -96,7 +89,6 @@ def main():
         help="Exclude uppercase letters from the password",
     )
 
-    # Get command parser
     parser_get = subparsers.add_parser(
         "get",
         help="Retrieve a stored credential",
@@ -107,7 +99,6 @@ def main():
         help="Name of the application",
     )
 
-    # Delete command parser
     parser_delete = subparsers.add_parser(
         "delete",
         help="Deletes a stored credential",

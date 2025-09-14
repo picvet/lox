@@ -5,7 +5,7 @@ from typing import Tuple
 
 from core.credential_manager import CredentialManager
 from core.utils.validation import (validate_aws_access_key,
-                                   validate_aws_role_arn,
+                                   validate_aws_region, validate_aws_role_arn,
                                    validate_aws_secret_key)
 
 logger = logging.getLogger(__name__)
@@ -28,10 +28,12 @@ def setup_aws_credentials() -> None:
         print("🔐 AWS Credentials Setup for Lox Password Manager")
         print("=" * 50)
 
-        role_arn, access_key, secret_key = _prompt_for_credentials()
+        role_arn, access_key, secret_key, region = _prompt_for_credentials()
 
         if not validate_aws_role_arn(role_arn):
             raise CredentialSetupError("Invalid AWS role arn provided!")
+        if not validate_aws_region(region):
+            raise CredentialSetupError("Invalid DynamoDB regoin provided!")
         if not validate_aws_secret_key(secret_key):
             raise CredentialSetupError("Invalid AWS secret key!")
         if not validate_aws_access_key(access_key):
@@ -43,6 +45,7 @@ def setup_aws_credentials() -> None:
             role_arn,
             access_key,
             secret_key,
+            region,
         ):
             print("✅ Credentials stored securely!")
         else:
@@ -74,7 +77,12 @@ def _prompt_for_credentials() -> Tuple[
         secret_key = input("Enter secret key: ").strip()
         if not secret_key:
             raise ValueError("Secret key cannot be empty")
-        return role_arn, access_key, secret_key
+
+        region = input("Enter region of DynamoDB: ").strip()
+        if not region:
+            raise ValueError("DynamoDB region cannot be empty")
+
+        return role_arn, access_key, secret_key, region
 
     except ValueError as e:
         print(f"❌ Validation error: {e}")

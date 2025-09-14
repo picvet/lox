@@ -48,3 +48,17 @@ def validate_aws_secret_key(secret_key: str) -> bool:
     """
     secret_key_pattern = r"^[A-Za-z0-9/+=]{40}$"
     return bool(re.match(secret_key_pattern, secret_key))
+
+
+def validate_aws_region(region_name):
+    """
+    Validates an AWS region name using a regular expression.
+
+    Args:
+      region_name (str): The name of the AWS region to validate.
+
+    Returns:
+      bool: True if the region name is valid, False otherwise.
+    """
+    pattern = re.compile(r"^[a-z]{2}-[a-z]+-[1-9]\d*$")
+    return bool(pattern.match(region_name))

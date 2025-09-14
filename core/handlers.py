@@ -11,21 +11,17 @@ from core.storage import Vault
 def handle_add_command(args):
     """Handle add command - add a password to the vault."""
     try:
-        # Create instances of the core classes
         vault = Vault()
         manager = VaultManager(vault)
 
-        # Get the master password from the user
         master_password = getpass.getpass("Enter master password: ")
 
-        # Load the vault data using the manager
         try:
             vault_data = manager.get_vault_data(master_password)
         except (FileNotFoundError, ValueError) as e:
             print(f"Error: {e}.")
             return
 
-        # Get the application name from the user with validation
         if not args.name:
             while True:
                 name = input("Enter name of application: ").strip()
@@ -33,7 +29,6 @@ def handle_add_command(args):
                     print("Application name cannot be empty. Please try again.")
                     continue
 
-                # Check if the name already exists in the vault
                 if name in vault_data["services"]:
                     print(f"'{name}' already exists. Please choose a different name.")
                     continue
@@ -45,7 +40,6 @@ def handle_add_command(args):
                 print(f"Error: '{name}' already exists.")
                 return
 
-        # Generate the new password
         password = generate_password(
             length=args.length,
             use_symbols=args.symbols,
@@ -53,17 +47,14 @@ def handle_add_command(args):
             use_uppercase=args.uppercase,
         )
 
-        # Add new password entry
         vault_data["services"][name] = {"password": password}
 
-        # Save the updated vault
         if manager.save_vault_data(vault_data, master_password):
             print(f"✓ Password saved for '{name}'")
         else:
             print("✗ Failed to save password.")
             return
 
-        # Handle clipboard and verbose output
         print(f"Generated password: {password}")
         if copy_to_clipboard(password):
             print("✓ Copied to clipboard!")
@@ -94,7 +85,6 @@ def handle_init_command():
     )
     print()
 
-    # Get master password with confirmation
     while True:
         master_password = getpass.getpass("Enter master password: ")
         if not master_password.strip():
@@ -109,7 +99,6 @@ def handle_init_command():
             print("Passwords do not match. Please try again.")
             print()
 
-    # Initialize the vault
     if vault.initialize_vault(master_password):
         print("✓ Vault created successfully!")
         print("You can now add credentials using 'lox add' command.")
@@ -135,13 +124,11 @@ def handle_reset_command():
         print("Reset cancelled.")
         return
 
-    # Delete the vault file
     try:
         os.remove(vault.vault_path)
         print("✓ Vault deleted.")
         print()
 
-        # Now initialize a new vault
         handle_init_command()
 
     except Exception as e:

@@ -39,6 +39,7 @@ class CredentialManager:
         role_arn: str,
         access_key: str,
         secret_key: str,
+        region: str,
     ) -> bool:
         """
         Store credentials using the most secure available backend.
@@ -47,6 +48,7 @@ class CredentialManager:
             "role_arn": role_arn,
             "access_key": access_key,
             "secret_key": secret_key,
+            "region": region,
         }
 
         for backend in self._backend_preference:
@@ -87,11 +89,12 @@ class CredentialManager:
 
     def normalize_credentials(self, creds) -> Dict[str, str]:
         if isinstance(creds, tuple):
-            role_arn, access_key, secret_key = creds
+            role_arn, access_key, secret_key, region = creds
             return {
                 "role_arn": role_arn,
                 "access_key": access_key,
                 "secret_key": secret_key,
+                "region": region,
             }
         elif isinstance(creds, dict):
             return creds
@@ -142,6 +145,7 @@ class CredentialManager:
                     role_arn = creds_data.get("role_arn")
                     access_key = creds_data.get("access_key")
                     secret_key = creds_data.get("secret_key")
+                    region = creds_data.get("region")
 
                     if role_arn:
                         backend_str = creds_data.get("storage_backend")
@@ -151,7 +155,12 @@ class CredentialManager:
                             except ValueError:
                                 pass
 
-                        return role_arn, access_key, secret_key
+                        return {
+                            "role_arn": role_arn,
+                            "access_key": access_key,
+                            "secret_key": secret_key,
+                            "region": region,
+                        }
                 else:
                     logger.warning("Found old credential format in keyring")
                     return None
@@ -193,6 +202,7 @@ class CredentialManager:
                     role_arn = creds_data.get("role_arn")
                     access_key = creds_data.get("access_key")
                     secret_key = creds_data.get("secret_key")
+                    region = creds_data.get("region")
 
                     if role_arn:
                         backend_str = creds_data.get("storage_backend")
@@ -202,7 +212,7 @@ class CredentialManager:
                             except ValueError:
                                 pass
 
-                        return role_arn, access_key, secret_key
+                        return role_arn, access_key, secret_key, region
 
         except (IOError, json.JSONDecodeError, AttributeError) as e:
             logger.debug("Env file retrieval failed: %s", e)
