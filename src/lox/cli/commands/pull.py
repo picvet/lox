@@ -10,8 +10,7 @@ class PullCommand(BaseCommand):
     def execute(self, args: Namespace) -> int:
         try:
             dynamo_service = DynamoDBService()
-            result = dynamo_service.get_last_item_query()
-            print(result)
+            dynamo_service.download_latest_vault()
             self.print_success("Vault pulled from DynamoDB successfully!")
             return 0
         except Exception as e:

@@ -1,5 +1,6 @@
 """AWS infrastructure components for Lox password manager."""
 
+from lox.infrastructure.aws.exceptions import CredentialSetupError
 from lox.infrastructure.aws.services.credential_service import (
     AWSCredentialError, AWSCredentialService)
 from lox.infrastructure.aws.services.dynamodb_service import (
@@ -16,4 +17,5 @@ __all__ = [
     "DynamoDBService",
     "DynamoDBServiceError",
     "validate_aws_credentials",
+    "CredentialSetupError",
 ]

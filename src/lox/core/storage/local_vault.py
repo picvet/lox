@@ -20,7 +20,8 @@ class Vault:
         Initialize vault with optional custom path.
 
         Args:
-            vault_path: Custom path to vault file. Defaults to "~/.config/loxpasswordmanager/vault.enc"
+            vault_path: Custom path to vault file.
+                Defaults to "~/.config/loxpasswordmanager/vault.enc"
         """
         if vault_path:
             self.vault_path = Path(vault_path)

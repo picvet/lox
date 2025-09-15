@@ -26,7 +26,7 @@ setup(
     install_requires=read_requirement(),
     entry_points={
         "console_scripts": [
-            "lox=main:main",
+            "lox=lox.__main__:main",
         ],
     },
     python_requires=">=3.8",

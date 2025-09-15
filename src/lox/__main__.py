@@ -1,11 +1,9 @@
 import sys
 
-from lox.cli.parser import execute_command
-
 
 def main():
     """Main entry point for the Lox password manager."""
-    from cli.parser import create_parser
+    from lox.cli.parser import create_parser
 
     parser, commands = create_parser()
 

@@ -1,72 +1,47 @@
+import logging
 from argparse import Namespace
 from typing import Tuple
 
 from lox.cli.commands.base import BaseCommand
+from lox.infrastructure.aws import CredentialSetupError
+from lox.infrastructure.aws.services.credential_service import \
+    AWSCredentialService
+from lox.infrastructure.aws.utils.validation import validate_aws_credentials
+
+logger = logging.getLogger(__name__)
 
 
 class SetupCommand(BaseCommand):
     """Handle 'lox setup' command."""
 
-    try:
-        print("🔐 AWS Credentials Setup for Lox Password Manager")
-        print("=" * 50)
+    def execute(self):
+        try:
+            print("🔐 AWS Credentials Setup for Lox Password Manager")
+            print("=" * 50)
 
-        role_arn, access_key, secret_key, region = _prompt_for_credentials()
+            aws_credential_service = AWSCredentialService()
 
-        if not validate_aws_role_arn(role_arn):
-            raise CredentialSetupError("Invalid AWS role arn provided!")
-        if not validate_aws_region(region):
-            raise CredentialSetupError("Invalid DynamoDB regoin provided!")
-        if not validate_aws_secret_key(secret_key):
-            raise CredentialSetupError("Invalid AWS secret key!")
-        if not validate_aws_access_key(access_key):
-            raise CredentialSetupError("Invalid AWS access key provided!")
+            aws_credentials = aws_credential_service.prompt_for_credentials()
 
-        credential_manager = CredentialManager()
+            validation_error = validate_aws_credentials(aws_credentials)
 
-        if credential_manager.store_credentials(
-            role_arn,
-            access_key,
-            secret_key,
-            region,
-        ):
-            print("✅ Credentials stored securely!")
-        else:
-            raise CredentialSetupError("Failed to store credentials securely")
+            if validation_error:
+                print(f"Validation failed: {validation_error}")
+                raise CredentialSetupError(
+                    f"AWS credential validation failed: {validation_error}"
+                )
 
-    except (EOFError, KeyboardInterrupt):
-        print("\n\nSetup cancelled by user.")
-        raise CredentialSetupError("Setup cancelled") from None
-    except Exception as e:
-        logger.error("Credential setup failed: %s", e)
-        raise CredentialSetupError(f"Setup failed: {e}") from e
+            if aws_credential_service.store_credentials(aws_credentials):
+                print("Credentials stored securely!")
+            else:
+                raise CredentialSetupError("Failed to store credentials securely")
 
-
-def _prompt_for_credentials() -> Tuple[
-    str,
-    str,
-    str,
-]:
-    """Prompt user for AWS credentials with input validation."""
-    try:
-        role_arn = input("Enter role arn: ").strip()
-        if not role_arn:
-            raise ValueError("Role arn cannot be empty")
-
-        access_key = input("Enter access key: ").strip()
-        if not access_key:
-            raise ValueError("Access key cannot be empty")
-
-        secret_key = input("Enter secret key: ").strip()
-        if not secret_key:
-            raise ValueError("Secret key cannot be empty")
-
-        region = input("Enter region of DynamoDB: ").strip()
-        if not region:
-            raise ValueError("DynamoDB region cannot be empty")
-
-        return role_arn, access_key, secret_key, region
-
-    except ValueError as e:
-        print(f"❌ Validation error: {e}")
-        raise
+        except (EOFError, KeyboardInterrupt):
+            print("\n\nSetup cancelled by user.")
+            raise CredentialSetupError("Setup cancelled") from None
+        except CredentialSetupError as e:
+            logger.error("Credential setup error: %s", e)
+            raise e
+        except Exception as e:
+            logger.error("Credential setup failed: %s", e)
+            raise CredentialSetupError(f"Setup failed: {e}") from e

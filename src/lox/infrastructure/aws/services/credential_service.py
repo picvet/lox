@@ -5,7 +5,7 @@ import json
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import keyring
 from keyring.errors import KeyringError
@@ -31,6 +31,38 @@ class AWSCredentialService:
         self.service_name = service_name
         self._used_backend: Optional[StorageBackend] = None
         self._backend_preference = [StorageBackend.KEYRING, StorageBackend.ENV_FILE]
+
+    def prompt_for_credentials(self) -> Dict[str, str]:
+        """
+        Prompts the user for AWS credentials with input validation.
+        """
+        try:
+            role_arn = input("Enter role arn: ").strip()
+            if not role_arn:
+                raise ValueError("Role arn cannot be empty")
+
+            access_key = input("Enter access key: ").strip()
+            if not access_key:
+                raise ValueError("Access key cannot be empty")
+
+            secret_key = input("Enter secret key: ").strip()
+            if not secret_key:
+                raise ValueError("Secret key cannot be empty")
+
+            region = input("Enter region of DynamoDB: ").strip()
+            if not region:
+                raise ValueError("DynamoDB region cannot be empty")
+
+            return {
+                "role_arn": role_arn,
+                "access_key": access_key,
+                "secret_key": secret_key,
+                "region": region,
+            }
+
+        except ValueError as e:
+            print(f"❌ Validation error: {e}")
+            raise
 
     def store_credentials(self, credentials: Dict[str, str]) -> bool:
         """
