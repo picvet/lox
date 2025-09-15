@@ -10,7 +10,7 @@ class PushCommand(BaseCommand):
     def execute(self, args: Namespace) -> int:
         try:
             dynamo_service = DynamoDBService()
-            dynamo_service.put_item(common_name="PERCY_PASS")
+            dynamo_service.upload_vault(common_name="PERCY_PASS")
             self.print_success("Vault pushed to DynamoDB successfully!")
             return 0
         except Exception as e:

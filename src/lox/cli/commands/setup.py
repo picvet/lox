@@ -1,6 +1,5 @@
 import logging
 from argparse import Namespace
-from typing import Tuple
 
 from lox.cli.commands.base import BaseCommand
 from lox.infrastructure.aws import CredentialSetupError
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 class SetupCommand(BaseCommand):
     """Handle 'lox setup' command."""
 
-    def execute(self):
+    def execute(self, args: Namespace):
         try:
             print("🔐 AWS Credentials Setup for Lox Password Manager")
             print("=" * 50)
