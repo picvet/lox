@@ -3,16 +3,15 @@ import sys
 
 from core.handlers import (handle_add_command, handle_delete_command,
                            handle_get_command, handle_init_command,
-                           handle_list_command, handle_reset_command)
+                           handle_list_command, handle_pull_command,
+                           handle_push_command, handle_reset_command)
 
 
 def main():
-    # Create the top-level parser
     parser = argparse.ArgumentParser(
         description="Lox - A simple CLI password manager", prog="lox"
     )
 
-    # Global arguments that must come BEFORE the subcommand
     parser.add_argument(
         "-v",
         "--verbose",
@@ -20,40 +19,38 @@ def main():
         help="increase output verbosity",
     )
 
-    # Create subparsers for different commands
     subparsers = parser.add_subparsers(
         dest="command", help="Available commands", required=True
     )
 
-    # Init command - Create a new vault
     subparsers.add_parser(
         "init",
         help="Initialize a new password vault",
     )
 
     subparsers.add_parser(
-        "login",
-        help="Login the cloud account for AWS to sync to",
+        "setup",
+        help="Setup the IAM role for AWS to sync with",
     )
 
     subparsers.add_parser(
-        "setup",
-        help="Setup the cloud account for AWS to sync to",
+        "push",
+        help="Push encrypted vault to DynamoDB, for synching",
     )
-
-    # Reset command - Rest the vault
+    subparsers.add_parser(
+        "pull",
+        help="Pull encrypted vault from DynamoDB",
+    )
     subparsers.add_parser(
         "reset",
         help="Reset the vault (deletes all data)",
     )
 
-    # List command - show all stored services
     subparsers.add_parser(
         "list",
         help="List all stored service names",
     )
 
-    # Add command parser
     parser_add = subparsers.add_parser(
         "add",
         help="Add a new credential entry",
@@ -92,7 +89,6 @@ def main():
         help="Exclude uppercase letters from the password",
     )
 
-    # Get command parser
     parser_get = subparsers.add_parser(
         "get",
         help="Retrieve a stored credential",
@@ -103,7 +99,6 @@ def main():
         help="Name of the application",
     )
 
-    # Delete command parser
     parser_delete = subparsers.add_parser(
         "delete",
         help="Deletes a stored credential",
@@ -128,22 +123,15 @@ def main():
         handle_delete_command(args)
     elif args.command == "list":
         handle_list_command()
+    elif args.command == "push":
+        handle_push_command()
+    elif args.command == "pull":
+        handle_pull_command()
+
     elif args.command == "setup":
         from scripts.setup_credentials import setup_aws_credentials
 
         setup_aws_credentials()
-    elif args.command == "login":
-        from core.credential_manager import CredentialManager
-
-        credential_manager = CredentialManager()
-        access_key, secret_key, region = credential_manager.get_credentials()
-
-        if access_key and secret_key:
-            print(f"Access Key: {access_key}")
-            print(f"Secret Key: {secret_key}")
-            print(f"Region: {region}")
-        else:
-            print("No credentials found or credentials expired")
 
 
 if __name__ == "__main__":
