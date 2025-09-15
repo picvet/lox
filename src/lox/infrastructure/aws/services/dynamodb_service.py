@@ -32,7 +32,7 @@ class DynamoDBService:
         self.table_name = table_name
         self.sts_service = sts_service or STSService()
 
-    def upload_vault(self, common_name: str = "PERCY_PASS") -> bool:
+    def upload_vault(self, common_name: str) -> bool:
         """
         Upload encrypted vault to DynamoDB.
 
