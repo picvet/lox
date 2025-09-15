@@ -1,6 +1,7 @@
 # Lox
 
 A secure and simple command-line password manager built with Python.
+NOTE: This has only been tested on Ubuntu OS
 
 ## Features
 
@@ -88,6 +89,17 @@ Sync your vault with cloud storage (requires additional setup):
 lox setup # configure AWS DynamoDB cloud sync credentials 
 lox push  # upload vault to cloud 
 lox pull  # download latest vault uploaded from cloud
+```
+
+## Install globally [Ubuntu]
+```bash 
+sudo apt install pipx 
+
+pipx ensurepath 
+
+pipx install -e lox/
+
+pipx install .
 ```
 
 ## Security 
