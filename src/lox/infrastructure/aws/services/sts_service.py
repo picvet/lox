@@ -57,11 +57,10 @@ class STSService:
                 aws_secret_access_key=stored_creds.secret_key,
             )
 
-            # Assume the role
             response = sts_client.assume_role(
                 RoleArn=stored_creds.role_arn,
                 RoleSessionName=role_session_name,
-                DurationSeconds=3600,  # 1 hour session
+                DurationSeconds=30,
             )
 
             creds = response["Credentials"]
