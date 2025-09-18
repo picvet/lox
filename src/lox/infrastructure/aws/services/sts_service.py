@@ -60,7 +60,7 @@ class STSService:
             response = sts_client.assume_role(
                 RoleArn=stored_creds.role_arn,
                 RoleSessionName=role_session_name,
-                DurationSeconds=30,
+                DurationSeconds=900,
             )
 
             creds = response["Credentials"]
